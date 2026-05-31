@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=2.12.1
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0
@@ -78,6 +78,10 @@ define Package/mwan3/install
 
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/15-mwan3 \
+		$(1)/etc/hotplug.d/iface/
+	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/25-mwan3-track-routes \
+		$(1)/etc/hotplug.d/iface/
+	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/99-mwan3-track-routes \
 		$(1)/etc/hotplug.d/iface/
 	$(INSTALL_DATA) ./files/etc/hotplug.d/iface/16-mwan3-user \
 		$(1)/etc/hotplug.d/iface/

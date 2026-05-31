@@ -1,0 +1,28 @@
+#!/bin/sh
+# Restore mwan3 track_ip host routes after network ifup (independent of 15-mwan3 init guard).
+
+[ "$ACTION" = ifup ] || exit 0
+[ -n "$INTERFACE" ] || exit 0
+
+. /lib/functions.sh
+. /lib/functions/network.sh
+. /lib/mwan3/mwan3.sh
+
+/etc/init.d/mwan3 running || exit 0
+
+config_load mwan3
+config_get_bool enabled "$INTERFACE" enabled 0
+[ "$enabled" -eq 1 ] || exit 0
+has_tip=0
+_collect_track_ip() { has_tip=1; }
+config_list_foreach "$INTERFACE" track_ip _collect_track_ip
+[ "$has_tip" -eq 1 ] || exit 0
+
+mwan3_init
+
+if [ -z "$DEVICE" ]; then
+	mwan3_resolve_track_device "$INTERFACE" DEVICE
+fi
+[ -n "$DEVICE" ] || exit 0
+
+mwan3_sync_track_host_routes "$INTERFACE" "$DEVICE"

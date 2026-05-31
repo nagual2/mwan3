@@ -58,6 +58,41 @@ mwan3_sync_track_host_routes()
 	config_list_foreach "$interface" track_ip _add_track_route
 }
 
+mwan3_resolve_track_device()
+{
+	local interface=$1
+	local _dev true_iface
+
+	unset "$2"
+	mwan3_get_true_iface true_iface "$interface"
+	network_get_device _dev "$true_iface" 2>/dev/null
+	if [ -z "$_dev" ]; then
+		_dev=$(ubus call "network.interface.${true_iface}" status 2>/dev/null |
+			jsonfilter -e '@.l3_device' 2>/dev/null)
+	fi
+	export "$2=$_dev"
+}
+
+mwan3_sync_all_track_host_routes()
+{
+	local iface device
+
+	config_load mwan3
+	sync_all_cb() {
+		local enabled has_tip=0
+
+		config_get_bool enabled "$1" enabled 0
+		[ "$enabled" -eq 1 ] || return 0
+		_collect_track_ip() { has_tip=1; }
+		config_list_foreach "$1" track_ip _collect_track_ip
+		[ "$has_tip" -eq 1 ] || return 0
+		mwan3_resolve_track_device "$1" device
+		[ -n "$device" ] || return 0
+		mwan3_sync_track_host_routes "$1" "$device"
+	}
+	config_foreach sync_all_cb interface
+}
+
 mwan3_delete_track_host_routes()
 {
 	local interface=$1 id family IP route_file line

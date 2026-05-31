@@ -1,0 +1,17 @@
+#!/bin/sh
+# After network ifup: debounced restore of all mwan3 track_ip host routes.
+
+[ "$ACTION" = ifup ] || exit 0
+
+/etc/init.d/mwan3 running || exit 0
+
+(
+	sleep 5
+	. /lib/functions.sh
+	. /lib/functions/network.sh
+	. /lib/mwan3/mwan3.sh
+	mwan3_init
+	mwan3_sync_all_track_host_routes
+) &
+
+exit 0

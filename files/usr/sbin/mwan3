@@ -29,6 +29,7 @@ EOF
 	command_help "connected" "Show directly connected networks"
 	command_help "rules" "Show active rules"
 	command_help "status" "Show all status"
+	command_help "sync-track-routes" "Restore host routes to all track_ip targets"
 	command_help "internal <ipv4|ipv6>" "Show internal configuration <default: ipv4>"
 	command_help "use <iface> <cmd>" "Run a command bound to <iface> and avoid mwan3 rules"
 }
@@ -240,8 +241,12 @@ use() {
 	FAMILY=$family DEVICE=$device SRCIP=$src_ip FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 "$@"
 }
 
+sync-track-routes() {
+	mwan3_sync_all_track_host_routes
+}
+
 case "$1" in
-	ifup|ifdown|interfaces|policies|connected|rules|status|start|stop|restart|internal)
+	ifup|ifdown|interfaces|policies|connected|rules|status|sync-track-routes|start|stop|restart|internal)
 		mwan3_init
 		"$@"
 	;;
