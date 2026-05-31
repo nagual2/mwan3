@@ -1,5 +1,7 @@
 build/
 dist/
+tests/tmp/
+tests/mocks/bin/ip
 *.ipk
 *.apk
 *~

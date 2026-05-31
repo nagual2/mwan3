@@ -3,6 +3,7 @@
 . /lib/functions.sh
 . /lib/functions/network.sh
 . /lib/mwan3/common.sh
+. /lib/mwan3/mwan3.sh
 
 INTERFACE=""
 DEVICE=""
@@ -189,6 +190,7 @@ firstconnect() {
 	fi
 
 	mwan3_get_src_ip SRC_IP $INTERFACE
+	mwan3_sync_track_host_routes "$INTERFACE" "$DEVICE"
 
 	LOG debug "firstconnect: called on $INTERFACE/$true_iface ($DEVICE). Status is $STATUS. SRC_IP is $SRC_IP"
 

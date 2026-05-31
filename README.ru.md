@@ -6,6 +6,17 @@
 
 Репозиторий нужен для **своих патчей** (например маршруты до `track_ip` для IPv6) без форка всего feed `packages`.
 
+## Патч nagual2: `track_host_routes`
+
+Версия **2.12.1-2**: для каждого `track_ip` добавляется host-маршрут (`/32` или `/128`) в **таблицу mwan3** интерфейса (`ip route replace table <id> … dev <DEVICE>`).
+
+- UCI: `mwan3.globals.track_host_routes=1` (по умолчанию включено в этом fork)
+- Per-iface: `option track_host_routes '0'` для отключения
+- Модуль: `files/lib/mwan3/track_host_routes.sh`
+- Вызов: `mwan3track` (`firstconnect`), hotplug `ifup`/`ifdown`
+
+Деплой на prod: `scripts/deploy-prod.sh prod-openwrt`
+
 ## Upstream
 
 | Поле | Значение |

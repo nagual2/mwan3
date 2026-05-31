@@ -501,12 +501,16 @@ mwan3_delete_iface_route()
 		return 0
 	fi
 
+	mwan3_delete_track_host_routes "$1"
+
 	if [ "$family" = "ipv4" ]; then
 		$IP4 route flush table "$id"
 	elif [ "$family" = "ipv6" ] && [ $NO_IPV6 -eq 0 ]; then
 		$IP6 route flush table "$id"
 	fi
 }
+
+. "${IPKG_INSTROOT}/lib/mwan3/track_host_routes.sh"
 
 mwan3_create_iface_rules()
 {

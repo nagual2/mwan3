@@ -6,6 +6,13 @@ Standalone OpenWrt package extracted from [openwrt/packages `net/mwan3`](https:/
 
 Use this repository to track **local patches** (for example IPv6 `track_ip` routing) without forking the entire `openwrt/packages` feed.
 
+## nagual2 patch: `track_host_routes`
+
+**2.12.1-2**: installs host routes (`/32` or `/128`) for each `track_ip` in the mwan3 per-interface routing table so health checks work over the correct WAN (IPv6 multi-tunnel).
+
+- UCI: `mwan3.globals.track_host_routes=1` (default on in this fork)
+- Deploy: `scripts/deploy-prod.sh prod-openwrt`
+
 ## Upstream
 
 | Field | Value |

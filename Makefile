@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=2.12.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0
@@ -91,6 +91,12 @@ define Package/mwan3/install
 		$(1)/lib/mwan3/
 	$(INSTALL_DATA) ./files/lib/mwan3/mwan3.sh \
 		$(1)/lib/mwan3/
+	$(INSTALL_DATA) ./files/lib/mwan3/track_host_routes.sh \
+		$(1)/lib/mwan3/
+
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) ./files/etc/uci-defaults/99-mwan3-track-host-routes \
+		$(1)/etc/uci-defaults/
 
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/ucode/
 	$(INSTALL_BIN) ./files/usr/share/rpcd/ucode/mwan3 \
