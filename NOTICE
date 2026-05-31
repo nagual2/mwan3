@@ -1,0 +1,11 @@
+mwan3 — Multi-WAN hotplug and policy routing for OpenWrt
+
+Upstream: https://github.com/openwrt/packages/tree/master/net/mwan3
+Original maintainer: Florian Eckert <fe@dev.tdt.de>
+License: GNU General Public License v2.0 (GPL-2.0)
+
+This repository is a standalone extract for convenience and local patches.
+Copyright remains with upstream authors. See files in this tree for per-file
+copyright headers (OpenWrt.org and contributors).
+
+Synced from openwrt/packages commit: 858ec4093deeea8e63ea08cd4f41f7c034ea4b39
