@@ -7,3 +7,8 @@ tests/mocks/bin/ip
 *~
 .DS_Store
 Thumbs.db
+
+# Local infra tests (real IPv6, dev SSH hosts) — never commit
+scripts/Test-Mwan3PolicySwitch.ps1
+scripts/*.local.ps1
+tests/*.local.sh

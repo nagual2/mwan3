@@ -1,63 +1,141 @@
 # mwan3 (отдельный пакет)
 
-[English](README.md) | [Русский](README.ru.md)
+
+
+[English](README.md) | **Русский** | [Deutsch](README.de.md)
+
+
 
 Автономный пакет OpenWrt, выделенный из [openwrt/packages `net/mwan3`](https://github.com/openwrt/packages/tree/master/net/mwan3).
 
-Репозиторий нужен для **своих патчей** (например маршруты до `track_ip` для IPv6) без форка всего feed `packages`.
 
-## Патч nagual2: `track_host_routes`
 
-Версия **2.12.1-2**: для каждого `track_ip` добавляется host-маршрут (`/32` или `/128`) в **таблицу mwan3** интерфейса (`ip route replace table <id> … dev <DEVICE>`).
+Репозиторий для **своих патчей** IPv6 multi-WAN без форка всего feed `packages`.
 
-- UCI: `mwan3.globals.track_host_routes=1` (по умолчанию включено в этом fork)
-- Per-iface: `option track_host_routes '0'` для отключения
-- Модуль: `files/lib/mwan3/track_host_routes.sh`
-- Вызов: `mwan3track` (`firstconnect`), hotplug `ifup`/`ifdown`
 
-Деплой на prod: `scripts/deploy-prod.sh prod-openwrt`
 
-## Upstream
+## Патчи nagual2 (2.12.1-4)
 
-| Поле | Значение |
-|------|----------|
-| Источник | https://github.com/openwrt/packages/tree/master/net/mwan3 |
-| Коммит синхронизации | `858ec4093deeea8e63ea08cd4f41f7c034ea4b39` (2025-05-31) |
-| Версия upstream | 2.12.1-1 |
 
-Обновление из upstream: [UPSTREAM.md](UPSTREAM.md).
 
-## Сборка (OpenWrt SDK / полное дерево)
+### `track_host_routes`
+
+
+
+Host-маршруты `/32`/`/128` до каждого `track_ip` в таблице mwan3 интерфейса — без них `mwan3track` ping6 по IPv6 WG не проходит.
+
+
+
+- UCI: `mwan3.globals.track_host_routes=1`
+
+- Hotplug `25` + `99` после `network restart`
+
+- `mwan3 sync-track-routes`
+
+
+
+### Фильтр `connected_ipv6`
+
+
+
+Не добавляет в `mwan3_connected_ipv6` широкие префиксы (`::/1`, `8000::/1`, `2000::/3`, короче `/32`) — иначе policy mwan3 обходится.
+
+
+
+- UCI: `mwan3.globals.connected_ipv6_min_prefixlen=32`
+
+- `mwan3 flush-conntrack` — после смены policy (CONNMARK)
+
+
+
+## Сборка
+
+
 
 ```bash
-cd package
-git clone https://github.com/nagual2/mwan3.git custom/mwan3
 
-make menuconfig   # Network → Routing and Redirection → mwan3
-make package/mwan3/compile V=s
+./scripts/build-all.sh          # тесты + IPK (mkpkg)
+./scripts/build-ipk-mkpkg.sh    # только .ipk (быстро, x86/64)
+./scripts/build-ipk-sdk.sh      # .ipk через OpenWrt SDK (медленно)
+./scripts/build-apk-sdk.sh      # .apk (OpenWrt 25.12+)
+
 ```
 
-Собирается `libwrap_mwan3_sockopt.so` из `src/sockopt_wrap.c` под **целевую** архитектуру роутера.
+
+
+Артефакты: `dist/mwan3_2.12.1-4_*.ipk`
+
+
+
+Другая архитектура: `SDK_URL=<url SDK вашего target> ./scripts/build-ipk-sdk.sh`
+
+Кэш SDK: `~/.cache/openwrt-sdk/archives/` — повторная загрузка только если на сервере изменился файл (ETag / Last-Modified / size). Модуль: `scripts/lib/sdk-cache.sh`.
+
+
 
 ## Установка на роутер
 
-Без патчей удобнее ставить из официального feed:
+OpenWrt 25.12+ (**apk**, рекомендуется):
 
 ```bash
-opkg update && opkg install mwan3
-apk add mwan3   # OpenWrt 25.12+
+./scripts/build-apk-mkpkg.sh
+./scripts/install-apk.sh 192.168.56.1
 ```
 
-Свой `.ipk` — только если собран под архитектуру вашего устройства.
+OpenWrt 23.x (opkg):
 
-## Связанные репозитории
+```bash
+scp dist/mwan3_*.ipk root@openwrt-dev:/tmp/
+ssh root@openwrt-dev 'opkg install /tmp/mwan3_*.ipk'
+/etc/init.d/mwan3 restart
+mwan3 sync-track-routes
+```
+
+### Pin (apk)
+
+`apk add --allow-untrusted` создаёт pin `mwan3><Q1hash…` в `/etc/apk/world`. Проверка: `grep '^mwan3><' /etc/apk/world`, `apk policy mwan3`. Подробно: [luci-app-mwan3 — Pinning](https://github.com/nagual2/luci-app-mwan3#pinning-the-nagual2-fork-apk).
+
+Overlay без ipk (только dev): `scripts/deploy-prod.sh prod-openwrt`
+
+
+
+## Связанные пакеты
+
+
 
 | Репозиторий | Назначение |
+
 |-------------|------------|
+
 | [nagual2/mwan3](https://github.com/nagual2/mwan3) | Этот пакет |
-| [nagual2/packages](https://github.com/nagual2/packages) | Полный fork feed (тяжёлый) |
+
+| [nagual2/luci-app-mwan3](https://github.com/nagual2/luci-app-mwan3) | LuCI для fork-опций |
+
 | [nagual2/mwan6-npt](https://github.com/nagual2/mwan6-npt) | NPTv6 multi-WAN |
+
+| [nagual2/mwan6-npt-luci](https://github.com/nagual2/mwan6-npt-luci) | LuCI для mwan6-npt |
+
+
+
+## LuCI
+
+
+
+Fork-опции в GUI: **[luci-app-mwan3](https://github.com/nagual2/luci-app-mwan3)**.
+
+
+
+## Документация
+
+
+
+Триязычные README в пакете: `/usr/share/doc/mwan3/` (`README.en.md`, `README.ru.md`, `README.de.md`).
+
+
 
 ## Лицензия
 
+
+
 GPL-2.0, как у upstream. См. [NOTICE](NOTICE).
+
