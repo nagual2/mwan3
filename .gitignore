@@ -1,14 +1,16 @@
-build/
-dist/
-tests/tmp/
-tests/mocks/bin/ip
-*.ipk
-*.apk
-*~
-.DS_Store
-Thumbs.db
-
-# Local infra tests (real IPv6, dev SSH hosts) — never commit
-scripts/Test-Mwan3PolicySwitch.ps1
-scripts/*.local.ps1
-tests/*.local.sh
+build/
+dist/
+tests/tmp/
+tests/mocks/bin/ip
+*.ipk
+*.apk
+*~
+.DS_Store
+Thumbs.db
+
+# Local lab / agent test scripts (dev IPv6, SSH hosts) — never commit
+scripts/Test-Mwan3PolicySwitch.ps1
+scripts/*.ai.ps1
+scripts/*.local.ps1
+tests/*.local.sh
+
