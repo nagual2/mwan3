@@ -1,0 +1,7 @@
+#!/bin/sh
+# Default connected_ipv6_min_prefixlen for nagual2 fork (skip ::/1 in connected ipset).
+if ! uci -q get mwan3.globals.connected_ipv6_min_prefixlen >/dev/null; then
+	uci set mwan3.globals.connected_ipv6_min_prefixlen='32'
+	uci commit mwan3
+fi
+exit 0

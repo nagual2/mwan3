@@ -2,8 +2,10 @@
 
 . "${IPKG_INSTROOT}/usr/share/libubox/jshn.sh"
 . "${IPKG_INSTROOT}/lib/mwan3/common.sh"
+. "${IPKG_INSTROOT}/lib/mwan3/connected_routes.sh"
 
 CONNTRACK_FILE="/proc/net/nf_conntrack"
+MWAN3_CONNTRACK_FILE="$CONNTRACK_FILE"
 IPv6_REGEX="([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|"
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,7}:|"
 IPv6_REGEX="${IPv6_REGEX}([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|"
@@ -194,6 +196,7 @@ mwan3_set_connected_ipv6()
 	mwan3_push_update flush mwan3_connected_ipv6
 
 	for connected_network_v6 in $($IP6 route | awk '{print $1}' | grep -E "$IPv6_REGEX"); do
+		mwan3_connected_ipv6_skip "$connected_network_v6" && continue
 		mwan3_push_update -! add mwan3_connected_ipv6 "$connected_network_v6"
 	done
 

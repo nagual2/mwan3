@@ -30,6 +30,7 @@ EOF
 	command_help "rules" "Show active rules"
 	command_help "status" "Show all status"
 	command_help "sync-track-routes" "Restore host routes to all track_ip targets"
+	command_help "flush-conntrack" "Flush kernel connection tracking (after policy change)"
 	command_help "internal <ipv4|ipv6>" "Show internal configuration <default: ipv4>"
 	command_help "use <iface> <cmd>" "Run a command bound to <iface> and avoid mwan3 rules"
 }
@@ -245,8 +246,12 @@ sync-track-routes() {
 	mwan3_sync_all_track_host_routes
 }
 
+flush-conntrack() {
+	mwan3_flush_all_conntrack
+}
+
 case "$1" in
-	ifup|ifdown|interfaces|policies|connected|rules|status|sync-track-routes|start|stop|restart|internal)
+	ifup|ifdown|interfaces|policies|connected|rules|status|sync-track-routes|flush-conntrack|start|stop|restart|internal)
 		mwan3_init
 		"$@"
 	;;

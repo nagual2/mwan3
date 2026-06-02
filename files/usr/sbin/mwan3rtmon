@@ -75,7 +75,12 @@ mwan3_rtmon_route_handle()
 
 	if [ "$route_line" = "$1" ]; then
 		action="replace"
-		$IPS -! add mwan3_connected_${route_family} ${route_line%% *}
+		if [ "$route_family" = "ipv6" ]; then
+			mwan3_connected_ipv6_skip "${route_line%% *}" || \
+				$IPS -! add mwan3_connected_ipv6 "${route_line%% *}"
+		else
+			$IPS -! add mwan3_connected_${route_family} ${route_line%% *}
+		fi
 	else
 		action="del"
 		mwan3_set_connected_${route_family}
