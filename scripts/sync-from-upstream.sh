@@ -18,6 +18,7 @@ UPSTREAM_COMMIT=$(git rev-parse HEAD)
 rsync -a --delete \
   --exclude='README.md' \
   --exclude='README.ru.md' \
+  --exclude='README.de.md' \
   --exclude='UPSTREAM.md' \
   --exclude='NOTICE' \
   --exclude='.gitignore' \
