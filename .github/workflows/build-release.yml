@@ -12,6 +12,15 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target_arch: x86_64
+            sdk_url: https://downloads.openwrt.org/releases/25.12.0/targets/x86/64/openwrt-sdk-25.12.0-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            build_ipk: true
+          - target_arch: aarch64_cortex-a53
+            sdk_url: https://downloads.openwrt.org/releases/25.12.4/targets/mediatek/filogic/openwrt-sdk-25.12.4-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst
+            build_ipk: false
     steps:
       - name: Checkout mwan3
         uses: actions/checkout@v4
@@ -32,27 +41,42 @@ jobs:
           echo "pkg_release=${rel##*-r}" >> "$GITHUB_OUTPUT"
 
       - name: Run tests
+        if: matrix.target_arch == 'x86_64'
         run: bash tests/run_tests.sh
 
-      - name: Build IPK (x86_64)
+      - name: Build IPK (x86_64 only)
+        if: matrix.build_ipk
         env:
           PKG_RELEASE: ${{ steps.ver.outputs.pkg_release }}
         run: bash scripts/build-ipk-mkpkg.sh
 
-      - name: Build APK (OpenWrt 25.12+)
+      - name: Build APK
         env:
           PKG_RELEASE: ${{ steps.ver.outputs.pkg_release }}
+          TARGET_ARCH: ${{ matrix.target_arch }}
+          SDK_URL: ${{ matrix.sdk_url }}
         run: bash scripts/build-apk-mkpkg.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mwan3-packages
+          name: mwan3-packages-${{ matrix.target_arch }}
           path: dist/*
           retention-days: 90
 
+  release:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: mwan3-packages-*
+          merge-multiple: true
+
       - name: Attach packages to GitHub Release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
