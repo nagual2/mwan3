@@ -15,9 +15,9 @@ install -m 0644 "$ROOT/README.md" "$DOC/README.en.md"
 install -m 0644 "$ROOT/README.ru.md" "$DOC/"
 install -m 0644 "$ROOT/README.de.md" "$DOC/"
 
-if [ -f "$ROOT/docs/OPENWRT_DEV_INFRASTRUCTURE.md" ]; then
-	install -m 0644 "$ROOT/docs/OPENWRT_DEV_INFRASTRUCTURE.md" "$DOC/"
-fi
+for _labdoc in OPENWRT_DEV_INFRASTRUCTURE.en.md OPENWRT_DEV_INFRASTRUCTURE.ru.md OPENWRT_DEV_INFRASTRUCTURE.de.md; do
+	[ -f "$ROOT/docs/$_labdoc" ] && install -m 0644 "$ROOT/docs/$_labdoc" "$DOC/"
+done
 
 if [ -d "$ROOT/scripts" ]; then
 	install -d "$DOC/integration"

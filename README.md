@@ -135,7 +135,7 @@ Shipped with the package:
 
 | Artifact | Path on router |
 |----------|----------------|
-| Lab guide | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.md` |
+| Lab guide (en / ru / de) | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.{en,ru,de}.md` |
 | PowerShell script | `/usr/share/doc/mwan3/integration/Test-Mwan3PolicySwitch.ps1` |
 
 Copy the script to a Windows host. It switches `mwan3` IPv6 policies on the router and verifies connectivity from the router and from Windows (`-LanInterface` must have exactly one GUA).

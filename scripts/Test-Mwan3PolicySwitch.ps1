@@ -25,7 +25,7 @@
   Windows LAN source: single GUA on -LanInterface (dev host leg); resolved via Get-NetIPAddress.
 
   Shipped in mwan3 package: /usr/share/doc/mwan3/integration/Test-Mwan3PolicySwitch.ps1
-  Lab guide: /usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.md
+  Lab guide: /usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.en.md (also .ru.md, .de.md)
 
 .EXAMPLE
   .\Test-Mwan3PolicySwitch.ps1

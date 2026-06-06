@@ -105,7 +105,7 @@ Overlay без ipk (только dev): `scripts/deploy-prod.sh prod-openwrt`
 
 | Артефакт | Путь на роутере |
 |----------|-----------------|
-| Описание lab | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.md` |
+| Описание lab (en / ru / de) | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.{en,ru,de}.md` |
 | PowerShell-скрипт | `/usr/share/doc/mwan3/integration/Test-Mwan3PolicySwitch.ps1` |
 
 Скопируйте скрипт на Windows-хост. Переключает IPv6 policy на роутере, проверяет ping с роутера и с Windows (на `-LanInterface` — ровно один GUA).

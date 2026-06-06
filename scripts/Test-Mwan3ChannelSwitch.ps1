@@ -14,7 +14,7 @@
   Requires tcpdump on OpenWrt VM (apk add tcpdump).
 
   Shipped: /usr/share/doc/mwan3/integration/Test-Mwan3ChannelSwitch.ps1
-  Lab guide: /usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.md
+  Lab guide: /usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.en.md (also .ru.md, .de.md)
 
 .EXAMPLE
   .\Test-Mwan3ChannelSwitch.ps1 -DevHost 192.168.56.1 -LanInterface 'vEthernet (OpenWrt-LAN-Host)'

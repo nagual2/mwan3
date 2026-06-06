@@ -125,7 +125,11 @@ define Package/mwan3/install
 	$(CP) $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(1)/lib/mwan3/
 
 	$(INSTALL_DIR) $(1)/usr/share/doc/mwan3/integration
-	$(INSTALL_DATA) ./docs/OPENWRT_DEV_INFRASTRUCTURE.md \
+	$(INSTALL_DATA) ./docs/OPENWRT_DEV_INFRASTRUCTURE.en.md \
+		$(1)/usr/share/doc/mwan3/
+	$(INSTALL_DATA) ./docs/OPENWRT_DEV_INFRASTRUCTURE.ru.md \
+		$(1)/usr/share/doc/mwan3/
+	$(INSTALL_DATA) ./docs/OPENWRT_DEV_INFRASTRUCTURE.de.md \
 		$(1)/usr/share/doc/mwan3/
 	$(INSTALL_BIN) ./scripts/Test-Mwan3PolicySwitch.ps1 \
 		$(1)/usr/share/doc/mwan3/integration/

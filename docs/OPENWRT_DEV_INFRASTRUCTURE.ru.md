@@ -1,3 +1,5 @@
+**[Русский](OPENWRT_DEV_INFRASTRUCTURE.ru.md)** | [English](OPENWRT_DEV_INFRASTRUCTURE.en.md) | [Deutsch](OPENWRT_DEV_INFRASTRUCTURE.de.md)
+
 # OpenWrt dev lab — интеграционные тесты mwan3
 
 > **Назначение:** описание типовой лабораторной среды (Hyper-V + OpenWrt VM) для отладки **mwan3** и **mwan6-npt** до выкладки на production.  
@@ -7,7 +9,9 @@
 
 | Артефакт | Путь после установки пакета на OpenWrt |
 |----------|----------------------------------------|
-| Этот файл | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.md` |
+| Этот файл (RU) | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.ru.md` |
+| English | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.en.md` |
+| Deutsch | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.de.md` |
 | Быстрый тест политик | `/usr/share/doc/mwan3/integration/Test-Mwan3PolicySwitch.ps1` |
 | Комплексный тест каналов | `/usr/share/doc/mwan3/integration/Test-Mwan3ChannelSwitch.ps1` |
 
