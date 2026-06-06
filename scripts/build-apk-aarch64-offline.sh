@@ -1,51 +1,37 @@
 #!/usr/bin/env bash
-# Build mwan3 .apk for OpenWrt 25.12+ (x86_64) using apk mkpkg.
+# Build mwan3 .apk for aarch64_cortex-a53 using a pre-extracted filogic SDK (no network).
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OUTPUT_DIR="${OUTPUT_DIR:-$ROOT/dist}"
-SDK_DIR="${SDK_DIR:-$ROOT/build/sdk}"
-APK_TOOL="${APK_TOOL:-$SDK_DIR/staging_dir/host/bin/apk}"
-
-PKG_VERSION="${PKG_VERSION:-2.12.1}"
+ROOT="${ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+SDK="${SDK_DIR:-$ROOT/build/sdk-filogic}"
 PKG_RELEASE="${PKG_RELEASE:-6}"
-PKG_ID="${PKG_VERSION}-r${PKG_RELEASE}"
-TARGET_ARCH="${TARGET_ARCH:-x86_64}"
+PKG_ID="2.12.1-r${PKG_RELEASE}"
+TARGET_ARCH="${TARGET_ARCH:-aarch64_cortex-a53}"
+OUTPUT_DIR="${OUTPUT_DIR:-$ROOT/dist}"
 
-log() { printf '[build-apk-mkpkg] %s\n' "$*"; }
-
-ensure_apk_tool() {
-	if [ -x "$APK_TOOL" ]; then
-		return 0
-	fi
-	local archive url
-	url="${SDK_URL:-https://downloads.openwrt.org/releases/25.12.0/targets/x86/64/openwrt-sdk-25.12.0-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst}"
-	archive="$ROOT/build/$(basename "$url")"
-	log "Extracting apk host tool from OpenWrt SDK..."
-	mkdir -p "$ROOT/build"
-	[ -f "$archive" ] || wget -O "$archive" "$url"
-	rm -rf "$SDK_DIR"
-	mkdir -p "$SDK_DIR"
-	tar --zstd -xf "$archive" -C "$SDK_DIR" --strip-components=1
-	APK_TOOL="$SDK_DIR/staging_dir/host/bin/apk"
-	[ -x "$APK_TOOL" ] || {
-		echo "apk tool not found: $APK_TOOL" >&2
-		exit 1
-	}
+APK_TOOL="$SDK/staging_dir/host/bin/apk"
+[ -x "$APK_TOOL" ] || {
+	echo "Missing extracted SDK (apk tool): $APK_TOOL" >&2
+	echo "Extract: tar --zstd -xf build/openwrt-sdk-25.12.4-mediatek-filogic_*.tar.zst -C build/sdk-filogic --strip-components=1" >&2
+	exit 1
 }
 
-ensure_apk_tool
+CC=$(find "$SDK/staging_dir" -path '*/bin/*-openwrt-linux-musl-gcc' -type f 2>/dev/null | head -1)
+[ -n "$CC" ] || {
+	echo "OpenWrt musl gcc not found under $SDK/staging_dir" >&2
+	exit 1
+}
 
-STAGE="$(mktemp -d)"
-BUILD_DIR="$(mktemp -d)"
-POSTINST="$(mktemp)"
-trap 'rm -rf "$STAGE" "$BUILD_DIR" "$POSTINST"' EXIT
+BUILD_DIR=$(mktemp -d)
+STAGE=$(mktemp -d)
+POSTINST=$(mktemp)
+trap 'rm -rf "$BUILD_DIR" "$STAGE" "$POSTINST"' EXIT
 
-# shellcheck source=scripts/lib/compile-libwrap.sh
-. "$ROOT/scripts/lib/compile-libwrap.sh"
-
-log "Compiling libwrap_mwan3_sockopt.so for ${TARGET_ARCH} (OpenWrt SDK musl)..."
-compile_libwrap "$ROOT" "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0"
+echo "[build-apk-aarch64-offline] Compiling libwrap with $CC ..."
+"$CC" -shared -fPIC -DCONFIG_IPV6 \
+	-o "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0" \
+	"$ROOT/src/sockopt_wrap.c" \
+	-ldl
 
 install -d \
 	"$STAGE/etc/config" \
@@ -92,7 +78,7 @@ chmod 0755 "$POSTINST"
 mkdir -p "$OUTPUT_DIR"
 OUT_APK="$OUTPUT_DIR/mwan3-${PKG_ID}_${TARGET_ARCH}.apk"
 
-log "Creating $OUT_APK"
+echo "[build-apk-aarch64-offline] Creating $OUT_APK"
 "$APK_TOOL" mkpkg \
 	--compat 3.0.0_pre1 \
 	--files "$STAGE" \
@@ -106,4 +92,4 @@ log "Creating $OUT_APK"
 	--script "post-install:$POSTINST" \
 	--output "$OUT_APK"
 
-log "Built: $OUT_APK ($(wc -c <"$OUT_APK") bytes)"
+ls -la "$OUT_APK"

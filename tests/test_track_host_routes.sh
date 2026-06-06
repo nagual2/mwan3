@@ -16,6 +16,7 @@ log_fail() { echo "FAIL: $1"; failed=$((failed + 1)); }
 
 setup() {
 	mkdir -p "$MOCK_BIN" "$SCRIPT_DIR/tmp/status/mwan3track/tb62"
+	rm -f "$SCRIPT_DIR/tmp/disabled.flag"
 	export PATH="$MOCK_BIN:$PATH"
 	export IPKG_INSTROOT=""
 	export MWAN3_STATUS_DIR="$SCRIPT_DIR/tmp/status/mwan3"
@@ -130,9 +131,62 @@ test_delete_removes_routes() {
 	fi
 }
 
+test_sync_skips_ipv4() {
+	setup
+	config_get() {
+		local _export=$1 _opt=$3 _sec=$2 _default=${4:-}
+		case "$_sec" in
+			globals)
+				case "$_opt" in
+					track_host_routes) _export=1 ;;
+					*) _export="$_default" ;;
+				esac
+				;;
+			wwan)
+				case "$_opt" in
+					family) _export=ipv4 ;;
+					track_host_routes) _export="" ;;
+					*) _export="$_default" ;;
+				esac
+				;;
+			tb62)
+				case "$_opt" in
+					family) _export=ipv6 ;;
+					track_host_routes) _export="" ;;
+					*) _export="$_default" ;;
+				esac
+				;;
+		esac
+		export "$1=$_export"
+	}
+	config_list_foreach() {
+		local _sec=$1 _opt=$2 _fn=$3
+		[ "$_sec" = wwan ] && [ "$_opt" = track_ip ] && {
+			$_fn 1.1.1.1
+			$_fn 8.8.8.8
+		}
+		[ "$_sec" = tb62 ] && [ "$_opt" = track_ip ] && {
+			$_fn 2606:4700:4700::1001
+			$_fn 2606:4700:4700::1111
+		}
+	}
+	# shellcheck disable=SC1091
+	. "$TRACK_SH"
+	config_load mwan3
+	: >"$MWAN3_IP_LOG"
+	mwan3_sync_track_host_routes wwan phy1-sta0
+	if grep -q '1.1.1.1/32' "$MWAN3_IP_LOG" || grep -q '8.8.8.8/32' "$MWAN3_IP_LOG"; then
+		log_fail "sync must not add IPv4 /32 track routes"
+		cat "$MWAN3_IP_LOG"
+	else
+		log_pass "sync skips IPv4 track_host_routes"
+	fi
+}
+
 test_sync_adds_host_routes
 test_disabled_globally
 test_delete_removes_routes
+test_sync_skips_ipv4
 
 echo ""
 echo "Results: $passed passed, $failed failed"

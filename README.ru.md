@@ -22,7 +22,7 @@
 
 
 
-Host-маршруты `/32`/`/128` до каждого `track_ip` в таблице mwan3 интерфейса — без них `mwan3track` ping6 по IPv6 WG не проходит.
+Host-маршруты `/128` до каждого `track_ip` в таблице mwan3 **только для IPv6** — без них `mwan3track` ping6 по IPv6 WG не проходит. Для IPv4 (шлюз/NAT) host-маршруты не создаются.
 
 
 
@@ -96,6 +96,24 @@ mwan3 sync-track-routes
 `apk add --allow-untrusted` создаёт pin `mwan3><Q1hash…` в `/etc/apk/world`. Проверка: `grep '^mwan3><' /etc/apk/world`, `apk policy mwan3`. Подробно: [luci-app-mwan3 — Pinning](https://github.com/nagual2/luci-app-mwan3#pinning-the-nagual2-fork-apk).
 
 Overlay без ipk (только dev): `scripts/deploy-prod.sh prod-openwrt`
+
+
+
+## Интеграционные тесты (Windows + OpenWrt lab)
+
+В пакете:
+
+| Артефакт | Путь на роутере |
+|----------|-----------------|
+| Описание lab | `/usr/share/doc/mwan3/OPENWRT_DEV_INFRASTRUCTURE.md` |
+| PowerShell-скрипт | `/usr/share/doc/mwan3/integration/Test-Mwan3PolicySwitch.ps1` |
+
+Скопируйте скрипт на Windows-хост. Переключает IPv6 policy на роутере, проверяет ping с роутера и с Windows (на `-LanInterface` — ровно один GUA).
+
+```powershell
+scp root@<router-lan-ip>:/usr/share/doc/mwan3/integration/Test-Mwan3PolicySwitch.ps1 .
+.\Test-Mwan3PolicySwitch.ps1 -DevHost <router-lan-ip> -LanInterface 'vEthernet (OpenWrt-LAN-Host)'
+```
 
 
 

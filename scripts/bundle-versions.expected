@@ -1,0 +1,7 @@
+# Canonical multi-WAN bundle versions (sync with Backup/openwrt-prod/scripts/install_prod_packages.sh)
+LUCI_APP_MWAN3=1.0.1-r1
+LUCI_APP_MWAN6_NPT=1.2.2-r1
+LUCI_I18N_MWAN3_RU=1.0.0-r1
+# 1.0.2-r1: README/LICENSE in apk; mwan6-npt.ru.lmo identical to 1.0.0/1.0.1
+LUCI_I18N_MWAN6_NPT_RU=1.0.2-r1
+MWAN6_NPT_RELEASE=2

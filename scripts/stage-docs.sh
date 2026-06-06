@@ -14,3 +14,14 @@ install -d "$DOC"
 install -m 0644 "$ROOT/README.md" "$DOC/README.en.md"
 install -m 0644 "$ROOT/README.ru.md" "$DOC/"
 install -m 0644 "$ROOT/README.de.md" "$DOC/"
+
+if [ -f "$ROOT/docs/OPENWRT_DEV_INFRASTRUCTURE.md" ]; then
+	install -m 0644 "$ROOT/docs/OPENWRT_DEV_INFRASTRUCTURE.md" "$DOC/"
+fi
+
+if [ -d "$ROOT/scripts" ]; then
+	install -d "$DOC/integration"
+	for _ps1 in Test-Mwan3PolicySwitch.ps1 Test-Mwan3ChannelSwitch.ps1; do
+		[ -f "$ROOT/scripts/$_ps1" ] && install -m 0644 "$ROOT/scripts/$_ps1" "$DOC/integration/"
+	done
+fi

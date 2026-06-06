@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=2.12.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0
@@ -123,6 +123,14 @@ define Package/mwan3/install
 		$(1)/etc/
 
 	$(CP) $(PKG_BUILD_DIR)/libwrap_mwan3_sockopt.so.1.0 $(1)/lib/mwan3/
+
+	$(INSTALL_DIR) $(1)/usr/share/doc/mwan3/integration
+	$(INSTALL_DATA) ./docs/OPENWRT_DEV_INFRASTRUCTURE.md \
+		$(1)/usr/share/doc/mwan3/
+	$(INSTALL_BIN) ./scripts/Test-Mwan3PolicySwitch.ps1 \
+		$(1)/usr/share/doc/mwan3/integration/
+	$(INSTALL_BIN) ./scripts/Test-Mwan3ChannelSwitch.ps1 \
+		$(1)/usr/share/doc/mwan3/integration/
 
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/etc/uci-defaults/mwan3-migrate-flush_conntrack \

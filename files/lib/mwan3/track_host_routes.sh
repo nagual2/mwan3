@@ -24,17 +24,21 @@ mwan3_sync_track_host_routes()
 	local interface=$1 device=$2
 	local id family IP track_ip prefix error route_file
 
+	config_get family "$interface" family ipv4
+	if [ "$family" = "ipv4" ]; then
+		# Host /32 dev routes break gateway-based uplinks (ARP for public track_ip).
+		# track_host_routes applies to IPv6 tunnels only; drop legacy IPv4 routes.
+		mwan3_delete_track_host_routes "$interface"
+		return 0
+	fi
+
 	mwan3_track_host_routes_enabled "$interface" || return 0
 	[ -n "$device" ] || return 0
 
-	config_get family "$interface" family ipv4
 	mwan3_get_iface_id id "$interface"
 	[ -n "$id" ] || return 0
 
-	if [ "$family" = "ipv4" ]; then
-		IP="$IP4"
-		prefix=32
-	elif [ "$family" = "ipv6" ] && [ "$NO_IPV6" -eq 0 ]; then
+	if [ "$family" = "ipv6" ] && [ "$NO_IPV6" -eq 0 ]; then
 		IP="$IP6"
 		prefix=128
 	else
