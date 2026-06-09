@@ -16,6 +16,9 @@ git pull --depth=1 -q origin master
 UPSTREAM_COMMIT=$(git rev-parse HEAD)
 
 rsync -a --delete \
+  --exclude='.git/' \
+  --exclude='build/' \
+  --exclude='dist/' \
   --exclude='README.md' \
   --exclude='README.ru.md' \
   --exclude='README.de.md' \
@@ -23,6 +26,8 @@ rsync -a --delete \
   --exclude='NOTICE' \
   --exclude='.gitignore' \
   --exclude='scripts/' \
+  --exclude='docs/' \
+  --exclude='tests/' \
   net/mwan3/ "$REPO_ROOT/"
 
 echo "Synced net/mwan3 from openwrt/packages @ $UPSTREAM_COMMIT"

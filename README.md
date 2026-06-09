@@ -119,7 +119,7 @@ Verify all nagual2 packages: [luci-app-mwan3/scripts/verify-apk-pins.sh](https:/
 
 | Source | https://github.com/openwrt/packages/tree/master/net/mwan3 |
 
-| Synced commit | `858ec4093deeea8e63ea08cd4f41f7c034ea4b39` |
+| Synced commit | `aa32dd256eb04eff40748b8b1a8623461441ffbe` |
 
 | Upstream version | 2.12.1-1 |
 
