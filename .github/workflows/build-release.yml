@@ -33,7 +33,7 @@ jobs:
       - name: Resolve version
         id: ver
         run: |
-          rel="2.12.1-r5"
+          rel="2.12.1-r6"
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
             rel="${GITHUB_REF_NAME#v}"
           fi

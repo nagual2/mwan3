@@ -1,0 +1,7 @@
+# Shell scripts and OpenWrt package files must use LF (APK installs break with CRLF).
+Makefile text eol=lf
+*.sh text eol=lf
+*.user text eol=lf
+files/** text eol=lf
+tests/** text eol=lf
+scripts/** text eol=lf

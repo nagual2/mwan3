@@ -89,6 +89,10 @@ exit 0
 EOF
 chmod 0755 "$POSTINST"
 
+# Windows checkouts may introduce CRLF; APK scripts must be LF for ash on router.
+find "$STAGE" -type f \( -name '*.sh' -o -path '*/etc/init.d/*' -o -path '*/hotplug.d/*' -o -path '*/uci-defaults/*' -o -path '*/usr/sbin/*' \) \
+	-exec perl -pi -e 's/\r$//' {} +
+
 mkdir -p "$OUTPUT_DIR"
 OUT_APK="$OUTPUT_DIR/mwan3-${PKG_ID}_${TARGET_ARCH}.apk"
 

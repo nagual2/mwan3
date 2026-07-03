@@ -19,7 +19,8 @@ assert_eq() {
 	fi
 }
 
-mwan3_ver="$(awk -F= '/^PKG_VERSION:=/{v=$2} /^PKG_RELEASE:=/{print v"-r"$2}' "$ROOT/Makefile" | tail -1)"
+mwan3_ver="$(awk -F= '/^PKG_VERSION:=/{v=$2} /^PKG_RELEASE:=/{print v"-r"$2}' "$ROOT/Makefile" | tr -d '\r' | tail -1)"
+assert_eq "$MWAN3" "$mwan3_ver" "MWAN3 pinned to Makefile"
 assert_eq "$LUCI_APP_MWAN3" "1.0.1-r1" "LUCI_APP_MWAN3 pinned"
 assert_eq "$LUCI_APP_MWAN6_NPT" "1.2.2-r1" "LUCI_APP_MWAN6_NPT pinned"
 assert_eq "$LUCI_I18N_MWAN3_RU" "1.0.0-r1" "LUCI_I18N_MWAN3_RU pinned"
