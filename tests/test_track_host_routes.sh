@@ -103,6 +103,38 @@ test_sync_adds_host_routes() {
 	fi
 }
 
+test_sync_adds_policy_default() {
+	setup
+	: >"$MWAN3_IP_LOG"
+	mwan3_sync_track_host_routes tb62 tb62
+	if grep -q 'route replace table 2 default dev tb62 metric 1' "$MWAN3_IP_LOG"; then
+		log_pass "sync adds policy-table default for IPv6 iface"
+	else
+		log_fail "sync adds policy-table default for IPv6 iface"
+		cat "$MWAN3_IP_LOG"
+	fi
+}
+
+test_id2mask_iface_marks() {
+	setup
+	# mmx_mask 0x3f00: bits 8-13; id 3 → 0x300, id 4 → 0x400
+	MMX_MASK=0x3f00
+	id=3
+	got=$(mwan3_id2mask id MMX_MASK)
+	if [ "$got" = "0x300" ]; then
+		log_pass "mwan3_id2mask id=3 → 0x300"
+	else
+		log_fail "mwan3_id2mask id=3 → 0x300 (got $got)"
+	fi
+	id=4
+	got=$(mwan3_id2mask id MMX_MASK)
+	if [ "$got" = "0x400" ]; then
+		log_pass "mwan3_id2mask id=4 → 0x400"
+	else
+		log_fail "mwan3_id2mask id=4 → 0x400 (got $got)"
+	fi
+}
+
 test_disabled_globally() {
 	setup
 	echo "track_host_routes_disabled=1" >"$SCRIPT_DIR/tmp/disabled.flag"
@@ -184,6 +216,8 @@ test_sync_skips_ipv4() {
 }
 
 test_sync_adds_host_routes
+test_sync_adds_policy_default
+test_id2mask_iface_marks
 test_disabled_globally
 test_delete_removes_routes
 test_sync_skips_ipv4

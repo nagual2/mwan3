@@ -17,8 +17,10 @@ stop_subprocs() {
 }
 
 WRAP() {
+	# Use per-iface mark so ping looks up the mwan3 policy table (not main).
+	# Needed when route_allowed_ips=0 and ::/1 is absent from main.
 	# shellcheck disable=SC2048
-	FAMILY=$FAMILY DEVICE=$DEVICE SRCIP=$SRC_IP FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
+	FAMILY=$FAMILY DEVICE=$DEVICE SRCIP=$SRC_IP FWMARK=$IFACE_MARK LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
 }
 
 clean_up() {
@@ -237,6 +239,11 @@ main() {
 	TRACK_OUTPUT=$MWAN3TRACK_STATUS_DIR/$INTERFACE/TRACK_OUTPUT
 
 	mwan3_init
+
+	# Map iface table id → fwmark bits (e.g. id 3 → 0x300 with mmx_mask 0x3f00).
+	mwan3_get_iface_id id "$INTERFACE"
+	IFACE_MARK=$(mwan3_id2mask id MMX_MASK)
+	[ -n "$IFACE_MARK" ] || IFACE_MARK=$MMX_DEFAULT
 
 	trap clean_up TERM
 	trap if_down USR1

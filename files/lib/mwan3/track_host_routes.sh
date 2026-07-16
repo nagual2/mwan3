@@ -60,6 +60,26 @@ mwan3_sync_track_host_routes()
 	}
 
 	config_list_foreach "$interface" track_ip _add_track_route
+
+	# Policy-table default so mwan3track WRAP (per-iface FWMARK) can reach track_ip
+	# when main has no ::/1 (route_allowed_ips=0). Not stored in TRACK_ROUTES —
+	# ifdown flushes the whole table via mwan3_delete_iface_route.
+	mwan3_ensure_policy_default_route "$interface" "$device" "$id" "$IP"
+}
+
+# Ensure default exists in mwan3 policy table for an IPv6 iface (dev-only).
+mwan3_ensure_policy_default_route()
+{
+	local interface=$1 device=$2 id=$3 IP=$4
+	local error
+
+	[ -n "$device" ] || return 0
+	[ -n "$id" ] || return 0
+	[ -n "$IP" ] || return 0
+
+	error=$($IP route replace table "$id" default dev "$device" metric 1 2>&1) ||
+		LOG warn "policy default replace table $id default dev $device: $error"
+	LOG debug "track route: table $id default dev $device"
 }
 
 mwan3_resolve_track_device()

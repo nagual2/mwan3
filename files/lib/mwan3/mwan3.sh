@@ -490,6 +490,12 @@ mwan3_create_iface_route()
 		fi
 
 	done
+
+	# When main has no default/::/1 for this iface (route_allowed_ips=0), still
+	# ensure policy-table default so tracking and marked LAN traffic can egress.
+	if [ "$family" = "ipv6" ] && [ "$NO_IPV6" -eq 0 ] && [ -n "$2" ]; then
+		mwan3_ensure_policy_default_route "$1" "$2" "$id" "$IP"
+	fi
 }
 
 mwan3_delete_iface_route()
@@ -514,6 +520,7 @@ mwan3_delete_iface_route()
 }
 
 . "${IPKG_INSTROOT}/lib/mwan3/track_host_routes.sh"
+. "${IPKG_INSTROOT}/lib/mwan3/sync_tunnel_metrics.sh"
 
 mwan3_create_iface_rules()
 {

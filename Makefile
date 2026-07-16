@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mwan3
 PKG_VERSION:=2.12.1
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_MAINTAINER:=Florian Eckert <fe@dev.tdt.de>
 PKG_LICENSE:=GPL-2.0
@@ -96,6 +96,8 @@ define Package/mwan3/install
 	$(INSTALL_DATA) ./files/lib/mwan3/mwan3.sh \
 		$(1)/lib/mwan3/
 	$(INSTALL_DATA) ./files/lib/mwan3/track_host_routes.sh \
+		$(1)/lib/mwan3/
+	$(INSTALL_DATA) ./files/lib/mwan3/sync_tunnel_metrics.sh \
 		$(1)/lib/mwan3/
 	$(INSTALL_DATA) ./files/lib/mwan3/connected_routes.sh \
 		$(1)/lib/mwan3/
