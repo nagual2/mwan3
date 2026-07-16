@@ -17,10 +17,14 @@ stop_subprocs() {
 }
 
 WRAP() {
-	# Use per-iface mark so ping looks up the mwan3 policy table (not main).
-	# Needed when route_allowed_ips=0 and ::/1 is absent from main.
+	# IPv6: per-iface mark → policy table (needed when route_allowed_ips=0, no ::/1 in main).
+	# IPv4: keep MMX_DEFAULT → main (gateway uplinks; policy table may be empty).
 	# shellcheck disable=SC2048
-	FAMILY=$FAMILY DEVICE=$DEVICE SRCIP=$SRC_IP FWMARK=$IFACE_MARK LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
+	if [ "$FAMILY" = "ipv6" ]; then
+		FAMILY=$FAMILY DEVICE=$DEVICE SRCIP=$SRC_IP FWMARK=$IFACE_MARK LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
+	else
+		FAMILY=$FAMILY DEVICE=$DEVICE SRCIP=$SRC_IP FWMARK=$MMX_DEFAULT LD_PRELOAD=/lib/mwan3/libwrap_mwan3_sockopt.so.1.0 $*
+	fi
 }
 
 clean_up() {

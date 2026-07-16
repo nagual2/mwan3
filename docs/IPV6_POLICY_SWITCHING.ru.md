@@ -24,7 +24,7 @@
 
 | № | Файл | Что сделано |
 |---|------|-------------|
-| 1 | `files/usr/sbin/mwan3track` | WRAP использует `FWMARK=$IFACE_MARK`; `IFACE_MARK` через `mwan3_id2mask` после `mwan3_init` |
+| 1 | `files/usr/sbin/mwan3track` | WRAP: IPv6 → `FWMARK=$IFACE_MARK`; **IPv4 → `MMX_DEFAULT`** (main), без смены v4 track |
 | 2 | `files/lib/mwan3/track_host_routes.sh` | `mwan3_ensure_policy_default_route` после sync `/128` |
 | 3 | `files/lib/mwan3/mwan3.sh` | вызов ensure из `mwan3_create_iface_route` (IPv6); восстановлен source `sync_tunnel_metrics.sh` |
 | 4 | `tests/test_track_host_routes.sh` | тесты policy default + id2mask |
