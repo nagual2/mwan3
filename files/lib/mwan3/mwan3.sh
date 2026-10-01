@@ -585,6 +585,97 @@ mwan3_delete_iface_ipset_entries()
 }
 
 
+mwan3_keepalive_state_file()
+{
+	echo "${MWAN3_STATUS_KEEPALIVE_DIR:-/var/run/mwan3/keepalive}/$policy"
+}
+
+# Remember which member a policy was actually routing through, and when. Only
+# the lowest online metric is recorded, so this always names the member that
+# carried real traffic, never a speculative one. The timestamp is what expires
+# the record if the link never reports itself dead.
+mwan3_keepalive_record()
+{
+	local dir rec_uptime
+	dir="${MWAN3_STATUS_KEEPALIVE_DIR:-/var/run/mwan3/keepalive}"
+	[ -d "$dir" ] || mkdir -p "$dir"
+	rec_uptime=""
+	get_uptime rec_uptime
+	{
+		echo "$1"
+		echo "$rec_uptime"
+	} > "$(mwan3_keepalive_state_file)" 2>/dev/null
+}
+
+# Returns 0 when the link of device $1 is still usable. sysfs `carrier` is
+# authoritative when the file exists; wireguard/6in4 devices have no carrier
+# file at all, so fall back to operstate for them.
+mwan3_keepalive_link_alive()
+{
+	local dev value=""
+	dev="$1"
+	[ -n "$dev" ] || return 1
+	[ -d "$MWAN3_SYSFS_NET/$dev" ] || return 1
+
+	if [ -f "$MWAN3_SYSFS_NET/$dev/carrier" ]; then
+		read -r value < "$MWAN3_SYSFS_NET/$dev/carrier"
+		[ "$value" = "1" ]
+		return
+	fi
+	[ -f "$MWAN3_SYSFS_NET/$dev/operstate" ] || return 1
+	read -r value < "$MWAN3_SYSFS_NET/$dev/operstate"
+	[ "$value" = "up" ]
+}
+
+# Emit the keepalive rule for the member recorded by mwan3_keepalive_record, so
+# a policy whose every member is tracker-offline keeps routing through the last
+# interface that did work. Sets mwan3_keepalive_added=1 when a rule was queued.
+mwan3_keepalive_push()
+{
+	local state_file iface="" device id rec_uptime="" now ttl
+	mwan3_keepalive_added=0
+	state_file="$(mwan3_keepalive_state_file)"
+	[ -f "$state_file" ] || return 0
+	{
+		read -r iface
+		read -r rec_uptime
+	} < "$state_file"
+
+	# Give up on the record after keepalive_ttl seconds. A 6in4 device keeps
+	# carrier=1 for as long as the *outer* link is up, so the link check
+	# alone cannot tell "tunnel died" from "probes are lying"; the TTL can.
+	if [ -n "$iface" ]; then
+		config_get ttl globals last_resort_keepalive_ttl "$MWAN3_KEEPALIVE_TTL"
+		get_uptime now
+		if [ -z "$rec_uptime" ] || [ -z "$now" ] ||
+		   [ $((now - rec_uptime)) -gt "$ttl" ] 2>/dev/null; then
+			LOG info "Keepalive for policy $policy ($iface) expired after ${ttl}s, falling back to last_resort"
+			rm -f "$state_file"
+			return 0
+		fi
+	fi
+
+	if [ -n "$iface" ]; then
+		network_get_device device "$iface"
+	fi
+	# No device left, or the link is genuinely gone: forget the member so a
+	# later rebuild cannot resurrect a dead uplink, and let the configured
+	# last_resort (blackhole/unreachable) take over.
+	if [ -z "$iface" ] || ! mwan3_keepalive_link_alive "$device"; then
+		rm -f "$state_file"
+		return 0
+	fi
+
+	mwan3_get_iface_id id "$iface"
+	[ -n "$id" ] && [ "$id" -gt 0 ] 2>/dev/null || return 0
+
+	mwan3_push_update -A "mwan3_policy_$policy" \
+			  -m mark --mark 0x0/$MMX_MASK \
+			  -m comment --comment \"keepalive $iface\" \
+			  -j MARK --set-xmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK"
+	mwan3_keepalive_added=1
+}
+
 mwan3_set_policy()
 {
 	local id iface family metric probability weight device is_lowest is_offline IPT IPTR total_weight current update error
@@ -646,6 +737,7 @@ mwan3_set_policy()
 				  -m mark --mark 0x0/$MMX_MASK \
 				  -m comment --comment \"$iface $weight $weight\" \
 				  -j MARK --set-xmark "$(mwan3_id2mask id MMX_MASK)/$MMX_MASK"
+		mwan3_keepalive_record "$iface"
 	elif [ $is_offline -eq 0 ]; then
 		probability=$((weight*1000/total_weight))
 		if [ "$probability" -lt 10 ]; then
@@ -702,6 +794,13 @@ mwan3_create_policies_iptables()
 
 		mwan3_push_update -F "mwan3_policy_$1"
 
+		# If every member is tracker-offline, prefer the last member that
+		# did carry traffic over the configured last_resort: the probes may
+		# be lying while the link is up. The keepalive rule marks the
+		# member's own fwmark, so `ip rule fwmark` still selects its table.
+		mwan3_keepalive_push
+
+		if [ $mwan3_keepalive_added -eq 0 ]; then
 		case "$last_resort" in
 			blackhole)
 				mwan3_push_update -A "mwan3_policy_$1" \
@@ -722,6 +821,7 @@ mwan3_create_policies_iptables()
 						  -j MARK --set-xmark $MMX_UNREACHABLE/$MMX_MASK
 				;;
 		esac
+		fi
 		mwan3_push_update COMMIT
 		mwan3_push_update ""
 

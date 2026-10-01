@@ -5,6 +5,10 @@ dist/
 tests/tmp/
 
 tests/mocks/bin/ip
+tests/mocks/bin/iptables
+tests/mocks/bin/ip6tables
+tests/mocks/bin/iptables-restore
+tests/mocks/bin/ip6tables-restore
 
 *.ipk
 

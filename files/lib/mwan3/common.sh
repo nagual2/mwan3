@@ -6,6 +6,14 @@ SCRIPTNAME="$(basename "$0")"
 
 MWAN3_STATUS_DIR="/var/run/mwan3"
 MWAN3_STATUS_IPTABLES_LOG_DIR="${MWAN3_STATUS_DIR}/iptables_log"
+# Sticky record of the member that was actually carrying traffic for a policy.
+MWAN3_STATUS_KEEPALIVE_DIR="${MWAN3_STATUS_DIR}/keepalive"
+# How long (seconds) a member may keep a policy alive on the strength of its
+# physical link alone, after its tracker stopped passing probes. Bounds the
+# damage when a tunnel dies without dropping its carrier flag.
+MWAN3_KEEPALIVE_TTL="${MWAN3_KEEPALIVE_TTL:-180}"
+# Overridable so the policy code can be unit-tested against a mock sysfs.
+MWAN3_SYSFS_NET="${MWAN3_SYSFS_NET:-/sys/class/net}"
 MWAN3TRACK_STATUS_DIR="/var/run/mwan3track"
 
 MWAN3_INTERFACE_MAX=""
