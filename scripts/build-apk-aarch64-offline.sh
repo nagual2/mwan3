@@ -30,8 +30,14 @@ if [ -z "$CC" ]; then
 		echo "No aarch64 gcc under $SDK/staging_dir and no previous aarch64 apk to reuse libwrap from" >&2
 		exit 1
 	}
-	echo "[build-apk-aarch64-offline] No target gcc; reusing libwrap from $(basename "$PREV_APK")"
-	tar -xzf "$PREV_APK" -C "$BUILD_DIR" lib/mwan3/libwrap_mwan3_sockopt.so.1.0
+	echo "[build-apk-aarch64-offline] No target gcc; extracting libwrap from $(basename "$PREV_APK")"
+	# apk v3 containers are not plain tar: unpack through the host apk tool.
+	"$APK_TOOL" --quiet add --root "$BUILD_DIR/apkroot" --initdb --allow-untrusted --no-scripts "$PREV_APK" >/dev/null 2>&1
+	[ -f "$BUILD_DIR/apkroot/lib/mwan3/libwrap_mwan3_sockopt.so.1.0" ] || {
+		echo "Failed to extract libwrap from $PREV_APK" >&2
+		exit 1
+	}
+	mv "$BUILD_DIR/apkroot/lib/mwan3/libwrap_mwan3_sockopt.so.1.0" "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0"
 else
 	echo "[build-apk-aarch64-offline] Compiling libwrap with $CC ..."
 	"$CC" -shared -fPIC -DCONFIG_IPV6 \
