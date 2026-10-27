@@ -21,7 +21,9 @@ STAGE=$(mktemp -d)
 POSTINST=$(mktemp)
 trap 'rm -rf "$BUILD_DIR" "$STAGE" "$POSTINST"' EXIT
 
-CC=$(find "$SDK/staging_dir" -path '*/bin/*-openwrt-linux-musl-gcc' -type f 2>/dev/null | head -1)
+# Match the aarch64 toolchain only: an x86_64 SDK checkout also ships a
+# *-openwrt-linux-musl-gcc, and its output would not run on the router.
+CC=$(find "$SDK/staging_dir" -path '*/bin/aarch64*-openwrt-linux-musl-gcc' -type f 2>/dev/null | head -1)
 if [ -z "$CC" ]; then
 	# sockopt_wrap.c is unchanged since the initial import: when no target
 	# toolchain is available, reuse libwrap from the previous aarch64 apk.
