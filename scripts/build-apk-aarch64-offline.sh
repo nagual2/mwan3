@@ -26,20 +26,27 @@ trap 'rm -rf "$BUILD_DIR" "$STAGE" "$POSTINST"' EXIT
 CC=$(find "$SDK/staging_dir" -path '*/bin/aarch64*-openwrt-linux-musl-gcc' -type f 2>/dev/null | head -1)
 if [ -z "$CC" ]; then
 	# sockopt_wrap.c is unchanged since the initial import: when no target
-	# toolchain is available, reuse libwrap from the previous aarch64 apk.
+	# toolchain is available, reuse a prebuilt aarch64 libwrap.
+	PREBUILT=$(ls -1 "$ROOT"/build/libwrap*aarch64* 2>/dev/null | head -1)
 	PREV_APK=$(ls -1 "$OUTPUT_DIR"/mwan3-2.12.1-r*_aarch64_cortex-a53.apk 2>/dev/null | sort | tail -1)
-	[ -n "$PREV_APK" ] || {
-		echo "No aarch64 gcc under $SDK/staging_dir and no previous aarch64 apk to reuse libwrap from" >&2
+	if [ -n "$PREBUILT" ]; then
+		echo "[build-apk-aarch64-offline] No target gcc; reusing prebuilt $(basename "$PREBUILT")"
+		install -m 0755 "$PREBUILT" "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0"
+	elif [ -n "$PREV_APK" ]; then
+		echo "[build-apk-aarch64-offline] No target gcc; extracting libwrap from $(basename "$PREV_APK")"
+		# apk v3 containers are not plain tar: unpack through the host apk tool.
+		# Run under WSL root (wsl.exe -u root): --initdb needs root, usermode lacks
+		# the database scaffolding for a fresh --root.
+		"$APK_TOOL" --quiet add --root "$BUILD_DIR/apkroot" --initdb --allow-untrusted --no-scripts "$PREV_APK" >/dev/null 2>&1
+		[ -f "$BUILD_DIR/apkroot/lib/mwan3/libwrap_mwan3_sockopt.so.1.0" ] || {
+			echo "Failed to extract libwrap from $PREV_APK" >&2
+			exit 1
+		}
+		mv "$BUILD_DIR/apkroot/lib/mwan3/libwrap_mwan3_sockopt.so.1.0" "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0"
+	else
+		echo "No aarch64 gcc, prebuilt libwrap or previous aarch64 apk available" >&2
 		exit 1
-	}
-	echo "[build-apk-aarch64-offline] No target gcc; extracting libwrap from $(basename "$PREV_APK")"
-	# apk v3 containers are not plain tar: unpack through the host apk tool.
-	"$APK_TOOL" --quiet add --root "$BUILD_DIR/apkroot" --initdb --allow-untrusted --no-scripts "$PREV_APK" >/dev/null 2>&1
-	[ -f "$BUILD_DIR/apkroot/lib/mwan3/libwrap_mwan3_sockopt.so.1.0" ] || {
-		echo "Failed to extract libwrap from $PREV_APK" >&2
-		exit 1
-	}
-	mv "$BUILD_DIR/apkroot/lib/mwan3/libwrap_mwan3_sockopt.so.1.0" "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0"
+	fi
 else
 	echo "[build-apk-aarch64-offline] Compiling libwrap with $CC ..."
 	"$CC" -shared -fPIC -DCONFIG_IPV6 \
