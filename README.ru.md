@@ -14,7 +14,7 @@
 
 
 
-## Патчи nagual2 (2.12.1-4)
+## Патчи nagual2 (2.12.1-r9)
 
 
 
@@ -23,6 +23,8 @@
 
 
 Host-маршруты `/128` до каждого `track_ip` в таблице mwan3 **только для IPv6** — без них `mwan3track` ping6 по IPv6 WG не проходит. Для IPv4 (шлюз/NAT) host-маршруты не создаются.
+
+С **r9** host-маршруты и policy-default для **шлюзовых аплинков** (DHCPv6 поверх Wi-Fi/Ethernet) ставятся через `via <шлюз>`: dev-only маршрут на broadcast-линке отправляет Neighbor Solicitation прямо на публичную цель и чёрную дыру трекингу (канал уходил в offline и не восстанавливался). Шлюз берётся из main-default устройства; туннели сохраняют dev-only форму. Подробно: [docs/GATEWAY_UPLINKS.ru.md](docs/GATEWAY_UPLINKS.ru.md).
 
 
 
@@ -63,7 +65,7 @@ Host-маршруты `/128` до каждого `track_ip` в таблице mw
 
 
 
-Артефакты: `dist/mwan3_2.12.1-4_*.ipk`
+Артефакты: `dist/mwan3-2.12.1-r9_aarch64_cortex-a53.apk` (prod), `dist/mwan3-2.12.1-r8_x86_64.apk` (dev VM)
 
 
 
@@ -79,7 +81,7 @@ OpenWrt 25.12+ (**apk**, рекомендуется):
 
 ```bash
 ./scripts/build-apk-mkpkg.sh
-./scripts/install-apk.sh 192.168.56.1
+./scripts/install-apk.sh <router-lan-ip>
 ```
 
 OpenWrt 23.x (opkg):
@@ -148,6 +150,11 @@ Fork-опции в GUI: **[luci-app-mwan3](https://github.com/nagual2/luci-app-m
 
 
 Триязычные README в пакете: `/usr/share/doc/mwan3/` (`README.en.md`, `README.ru.md`, `README.de.md`).
+
+Тематические доки репозитория:
+
+- [docs/IPV6_POLICY_SWITCHING.ru.md](docs/IPV6_POLICY_SWITCHING.ru.md) — per-iface WRAP fwmark и policy-default для IPv6-каналов.
+- [docs/GATEWAY_UPLINKS.ru.md](docs/GATEWAY_UPLINKS.ru.md) — шлюзовые IPv6-аплинки: чек-лист канала (family/enabled/sourcefilter), via-трекинг r9, DHCPv6-over-WLAN особенности, проект failover на нативный аплинк.
 
 
 

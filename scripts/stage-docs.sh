@@ -15,8 +15,11 @@ install -m 0644 "$ROOT/README.md" "$DOC/README.en.md"
 install -m 0644 "$ROOT/README.ru.md" "$DOC/"
 install -m 0644 "$ROOT/README.de.md" "$DOC/"
 
-for _labdoc in OPENWRT_DEV_INFRASTRUCTURE.en.md OPENWRT_DEV_INFRASTRUCTURE.ru.md OPENWRT_DEV_INFRASTRUCTURE.de.md; do
-	[ -f "$ROOT/docs/$_labdoc" ] && install -m 0644 "$ROOT/docs/$_labdoc" "$DOC/"
+# Thematic trilingual docs: <base>.{en,ru,de}.md — add new base names here.
+for _basedoc in OPENWRT_DEV_INFRASTRUCTURE GATEWAY_UPLINKS; do
+	for _lang in en ru de; do
+		[ -f "$ROOT/docs/${_basedoc}.${_lang}.md" ] && install -m 0644 "$ROOT/docs/${_basedoc}.${_lang}.md" "$DOC/"
+	done
 done
 
 if [ -d "$ROOT/scripts" ]; then

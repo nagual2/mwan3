@@ -6,7 +6,7 @@ Autonomes OpenWrt-Paket aus [openwrt/packages `net/mwan3`](https://github.com/op
 
 Repository für **eigene Patches** (IPv6 Multi-WAN) ohne Fork des gesamten `packages`-Feeds.
 
-## nagual2 Patches (2.12.1-4)
+## nagual2 Patches (2.12.1-r9)
 
 ### `track_host_routes`
 
@@ -16,6 +16,12 @@ Host-Routen (`/32` oder `/128`) für jedes `track_ip` in der mwan3-Schnittstelle
 - Pro Interface: `option track_host_routes '0'` zum Deaktivieren
 - Hotplug `25`/`99` stellt Routen nach `network restart` wieder her
 - Befehl: `mwan3 sync-track-routes`
+
+Seit **r9** werden Host-Routen und das Policy-Default für **Gateway-Uplinks** (DHCPv6 über
+Wi-Fi/Ethernet) über `via <Gateway>` gesetzt: eine Dev-only-Route auf einem Broadcast-Link schickt
+eine Neighbor Solicitation direkt auf das öffentliche Ziel und erstickt das Tracking (der Kanal
+ging offline und erholte sich nicht). Das Gateway stammt aus dem Main-Default des Geräts; Tunnel
+behalten die Dev-only-Form. Details: [docs/GATEWAY_UPLINKS.de.md](docs/GATEWAY_UPLINKS.de.md).
 
 ### `connected_ipv6` Filter
 
@@ -33,7 +39,7 @@ Host-Routen (`/32` oder `/128`) für jedes `track_ip` in der mwan3-Schnittstelle
 ./scripts/build-apk-sdk.sh      # .apk (OpenWrt 25.12+)
 ```
 
-Artefakte: `dist/mwan3_2.12.1-4_*.ipk`
+Artefakte: `dist/mwan3-2.12.1-r9_aarch64_cortex-a53.apk` (Prod), `dist/mwan3-2.12.1-r8_x86_64.apk` (Dev-VM)
 
 ## Installation auf dem Router
 
@@ -41,7 +47,7 @@ OpenWrt 25.12+ (**apk**, empfohlen):
 
 ```bash
 ./scripts/build-apk-mkpkg.sh
-./scripts/install-apk.sh 192.168.56.1
+./scripts/install-apk.sh <router-lan-ip>
 ```
 
 OpenWrt 23.x (opkg):
@@ -75,6 +81,11 @@ Fork-Optionen in der Weboberfläche: **[luci-app-mwan3](https://github.com/nagua
 ## Dokumentation
 
 Dreisprachige README im Paket unter `/usr/share/doc/mwan3/` (`README.en.md`, `README.ru.md`, `README.de.md`).
+
+Thematische Dokumente des Repos (ebenfalls im Paket):
+
+- [docs/IPV6_POLICY_SWITCHING.ru.md](docs/IPV6_POLICY_SWITCHING.ru.md) — Per-Iface-WRAP-Fwmark und Policy-Default für IPv6-Kanäle.
+- [docs/GATEWAY_UPLINKS.ru.md](docs/GATEWAY_UPLINKS.ru.md) — Gateway-artige IPv6-Uplinks: Kanal-Checkliste (family/enabled/sourcefilter), via-Tracking seit r9, DHCPv6-over-WLAN-Besonderheiten, Failover-Plan für den nativen Uplink. Dreisprachig: [en](docs/GATEWAY_UPLINKS.en.md) | [ru](docs/GATEWAY_UPLINKS.ru.md) | [de](docs/GATEWAY_UPLINKS.de.md).
 
 ## Lizenz
 

@@ -14,7 +14,7 @@ Use this repository to track **local patches** (IPv6 multi-WAN) without forking 
 
 
 
-## nagual2 patches (2.12.1-4)
+## nagual2 patches (2.12.1-r9)
 
 
 
@@ -33,6 +33,14 @@ Installs host routes (`/32` or `/128`) for each `track_ip` in the mwan3 per-inte
 - Hotplug `25`/`99` restores routes after `network restart`
 
 - Command: `mwan3 sync-track-routes`
+
+
+
+Since **r9**, host routes and the policy-table default for **gateway uplinks** (DHCPv6 over
+Wi-Fi/Ethernet) are installed via `via <gateway>`: a dev-only route on a broadcast link sends a
+Neighbor Solicitation straight to the public target and blackholes tracking (the channel went
+offline and did not recover). The gateway is taken from the device main-table default; tunnels
+keep the dev-only form. Details: [docs/GATEWAY_UPLINKS.en.md](docs/GATEWAY_UPLINKS.en.md).
 
 
 
@@ -76,7 +84,7 @@ Skips overly broad IPv6 routes in `mwan3_connected_ipv6` ipset so WG split-defau
 
 
 
-Output: `dist/mwan3_2.12.1-4_*.ipk` (and `.apk` if zstd tar available).
+Output: `dist/mwan3-2.12.1-r9_aarch64_cortex-a53.apk` (prod), `dist/mwan3-2.12.1-r8_x86_64.apk` (dev VM).
 
 
 
@@ -88,7 +96,7 @@ Install on router (OpenWrt 25.12+ / **apk**, recommended):
 
 ```bash
 ./scripts/build-apk-mkpkg.sh
-./scripts/install-apk.sh 192.168.56.1
+./scripts/install-apk.sh <router-lan-ip>
 ```
 
 OpenWrt 23.x (opkg):
@@ -178,6 +186,13 @@ Fork options in the web UI: **[luci-app-mwan3](https://github.com/nagual2/luci-a
 
 
 Trilingual README files ship in `/usr/share/doc/mwan3/` (`README.en.md`, `README.ru.md`, `README.de.md`).
+
+
+
+Thematic docs of this repository (also shipped in the package):
+
+- [docs/IPV6_POLICY_SWITCHING.ru.md](docs/IPV6_POLICY_SWITCHING.ru.md) — per-iface WRAP fwmark and the policy-table default for IPv6 channels.
+- [docs/GATEWAY_UPLINKS.ru.md](docs/GATEWAY_UPLINKS.ru.md) — gateway IPv6 uplinks: channel checklist (family/enabled/sourcefilter), via-tracking since r9, DHCPv6-over-WLAN specifics, native-uplink failover plan. Tri-lingual: [en](docs/GATEWAY_UPLINKS.en.md) | [ru](docs/GATEWAY_UPLINKS.ru.md) | [de](docs/GATEWAY_UPLINKS.de.md).
 
 
 
