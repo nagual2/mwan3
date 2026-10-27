@@ -16,22 +16,29 @@ APK_TOOL="$SDK/staging_dir/host/bin/apk"
 	exit 1
 }
 
-CC=$(find "$SDK/staging_dir" -path '*/bin/*-openwrt-linux-musl-gcc' -type f 2>/dev/null | head -1)
-[ -n "$CC" ] || {
-	echo "OpenWrt musl gcc not found under $SDK/staging_dir" >&2
-	exit 1
-}
-
 BUILD_DIR=$(mktemp -d)
 STAGE=$(mktemp -d)
 POSTINST=$(mktemp)
 trap 'rm -rf "$BUILD_DIR" "$STAGE" "$POSTINST"' EXIT
 
-echo "[build-apk-aarch64-offline] Compiling libwrap with $CC ..."
-"$CC" -shared -fPIC -DCONFIG_IPV6 \
-	-o "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0" \
-	"$ROOT/src/sockopt_wrap.c" \
-	-ldl
+CC=$(find "$SDK/staging_dir" -path '*/bin/*-openwrt-linux-musl-gcc' -type f 2>/dev/null | head -1)
+if [ -z "$CC" ]; then
+	# sockopt_wrap.c is unchanged since the initial import: when no target
+	# toolchain is available, reuse libwrap from the previous aarch64 apk.
+	PREV_APK=$(ls -1 "$OUTPUT_DIR"/mwan3-2.12.1-r*_aarch64_cortex-a53.apk 2>/dev/null | sort | tail -1)
+	[ -n "$PREV_APK" ] || {
+		echo "No aarch64 gcc under $SDK/staging_dir and no previous aarch64 apk to reuse libwrap from" >&2
+		exit 1
+	}
+	echo "[build-apk-aarch64-offline] No target gcc; reusing libwrap from $(basename "$PREV_APK")"
+	tar -xzf "$PREV_APK" -C "$BUILD_DIR" lib/mwan3/libwrap_mwan3_sockopt.so.1.0
+else
+	echo "[build-apk-aarch64-offline] Compiling libwrap with $CC ..."
+	"$CC" -shared -fPIC -DCONFIG_IPV6 \
+		-o "$BUILD_DIR/libwrap_mwan3_sockopt.so.1.0" \
+		"$ROOT/src/sockopt_wrap.c" \
+		-ldl
+fi
 
 install -d \
 	"$STAGE/etc/config" \

@@ -7,7 +7,9 @@ set -eu
 PKG_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 HOST="${1:?Usage: $0 <router_host>}"
 SSH_KEY="${SSH_KEY:-${HOME}/.ssh/id_ed25519}"
-APK_FILE="$(ls -1 "$PKG_DIR"/dist/mwan3-*_x86_64.apk 2>/dev/null | tail -1)"
+# PKG_ARCH narrows the pick when dist holds apks for several targets,
+# e.g. PKG_ARCH=aarch64_cortex-a53 ./scripts/install-apk.sh <router_host>
+APK_FILE="$(ls -1 "$PKG_DIR"/dist/mwan3-*"${PKG_ARCH:-}"*.apk 2>/dev/null | sort | tail -1)"
 
 [ -n "$APK_FILE" ] || {
 	echo "Build APK first: ./scripts/build-apk-mkpkg.sh" >&2
