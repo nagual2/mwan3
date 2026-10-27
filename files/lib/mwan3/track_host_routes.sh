@@ -22,7 +22,7 @@ mwan3_track_host_routes_enabled()
 mwan3_sync_track_host_routes()
 {
 	local interface=$1 device=$2
-	local id family IP track_ip prefix error route_file
+	local id family IP track_ip prefix error route_file gw
 
 	config_get family "$interface" family ipv4
 	if [ "$family" = "ipv4" ]; then
@@ -47,16 +47,41 @@ mwan3_sync_track_host_routes()
 
 	route_file="$MWAN3TRACK_STATUS_DIR/$interface/TRACK_ROUTES"
 	mkdir -p "$MWAN3TRACK_STATUS_DIR/$interface"
+
+	# Gateway uplinks must reach track_ip through the nexthop: a dev-only route
+	# on a broadcast link ARPs for the public target and blackholes the probe.
+	# Tunnels (WireGuard, SIT) have no via in their main-table default and keep
+	# dev-only routes. Gateway is taken from the device's main-table default.
+	# "|| gw=" guards against set -e when grep finds no via (tunnel case).
+	gw=$($IP route show default dev "$device" 2>/dev/null |
+		grep -m1 ' via ' |
+		sed -n 's/.* via \([^ ]*\).*/\1/p') || gw=""
+
+	# The gateway can appear/disappear between syncs (RA up, tunnel reconfig);
+	# replace with a different nexthop key leaves the old route in place, so
+	# drop previously stored specs first and re-add the current set.
+	if [ -f "$route_file" ]; then
+		while read -r line; do
+			[ -n "$line" ] || continue
+			$IP route del table "$id" $line 2>/dev/null ||
+				LOG debug "track route del (stale) table $id $line"
+		done <"$route_file"
+	fi
 	: >"$route_file"
 
 	_add_track_route() {
-		local tip=$1
+		local tip=$1 spec
 
 		[ -n "$tip" ] || return 0
-		error=$($IP route replace table "$id" "${tip}/${prefix}" dev "$device" metric 1 2>&1) ||
-			LOG warn "track route replace table $id ${tip}/${prefix} dev $device: $error"
-		echo "${tip}/${prefix} dev ${device}" >>"$route_file"
-		LOG debug "track route: table $id ${tip}/${prefix} dev $device"
+		if [ -n "$gw" ]; then
+			spec="${tip}/${prefix} via ${gw} dev ${device}"
+		else
+			spec="${tip}/${prefix} dev ${device}"
+		fi
+		error=$($IP route replace table "$id" $spec metric 1 2>&1) ||
+			LOG warn "track route replace table $id $spec metric 1: $error"
+		echo "$spec" >>"$route_file"
+		LOG debug "track route: table $id $spec"
 	}
 
 	config_list_foreach "$interface" track_ip _add_track_route
@@ -64,22 +89,32 @@ mwan3_sync_track_host_routes()
 	# Policy-table default so mwan3track WRAP (per-iface FWMARK) can reach track_ip
 	# when main has no ::/1 (route_allowed_ips=0). Not stored in TRACK_ROUTES —
 	# ifdown flushes the whole table via mwan3_delete_iface_route.
-	mwan3_ensure_policy_default_route "$interface" "$device" "$id" "$IP"
+	mwan3_ensure_policy_default_route "$interface" "$device" "$id" "$IP" "$gw"
 }
 
-# Ensure default exists in mwan3 policy table for an IPv6 iface (dev-only).
+# Ensure default exists in mwan3 policy table: via-nexthop for gateway uplinks,
+# dev-only for tunnels.
 mwan3_ensure_policy_default_route()
 {
-	local interface=$1 device=$2 id=$3 IP=$4
+	local interface=$1 device=$2 id=$3 IP=$4 gw=$5
 	local error
 
 	[ -n "$device" ] || return 0
 	[ -n "$id" ] || return 0
 	[ -n "$IP" ] || return 0
 
-	error=$($IP route replace table "$id" default dev "$device" metric 1 2>&1) ||
-		LOG warn "policy default replace table $id default dev $device: $error"
-	LOG debug "track route: table $id default dev $device"
+	if [ -n "$gw" ]; then
+		# A stale dev-only default (added before the gateway appeared) would
+		# blackhole everything in this table: remove it explicitly.
+		$IP route del table "$id" default dev "$device" metric 1 2>/dev/null
+		error=$($IP route replace table "$id" default via "$gw" dev "$device" metric 1 2>&1) ||
+			LOG warn "policy default replace table $id default via $gw dev $device metric 1: $error"
+		LOG debug "track route: table $id default via $gw dev $device"
+	else
+		error=$($IP route replace table "$id" default dev "$device" metric 1 2>&1) ||
+			LOG warn "policy default replace table $id default dev $device: $error"
+		LOG debug "track route: table $id default dev $device"
+	fi
 }
 
 mwan3_resolve_track_device()

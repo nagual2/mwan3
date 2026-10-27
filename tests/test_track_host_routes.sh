@@ -91,6 +91,57 @@ EOF
 	config_load mwan3
 }
 
+test_sync_uses_gateway_for_uplink() {
+	setup
+	# Gateway uplink: the main-table default of the device carries a via-nexthop.
+	# Host routes and the policy-table default must then be installed with via.
+	cat >"$MOCK_BIN/ip" <<'MOCK'
+#!/bin/bash
+case "$*" in
+	*"route show default dev phy0-sta0"*)
+		echo "default via fe80::1 dev phy0-sta0 proto static metric 384"
+		exit 0
+		;;
+esac
+echo "ip $*" >> "${MWAN3_IP_LOG}"
+exit 0
+MOCK
+	chmod +x "$MOCK_BIN/ip"
+	mwan3_sync_track_host_routes tb62 phy0-sta0
+	if grep -q 'route replace table 2 2606:4700:4700::1001/128 via fe80::1 dev phy0-sta0 metric 1' "$MWAN3_IP_LOG" &&
+		grep -q 'route replace table 2 default via fe80::1 dev phy0-sta0 metric 1' "$MWAN3_IP_LOG"; then
+		log_pass "sync uses via-nexthop for gateway uplink (host routes + default)"
+	else
+		log_fail "sync uses via-nexthop for gateway uplink (host routes + default)"
+		cat "$MWAN3_IP_LOG"
+	fi
+}
+
+test_gateway_uplink_delete_stale() {
+	setup
+	cat >"$MOCK_BIN/ip" <<'MOCK'
+#!/bin/bash
+case "$*" in
+	*"route show default dev phy0-sta0"*)
+		echo "default via fe80::1 dev phy0-sta0 proto static metric 384"
+		exit 0
+		;;
+esac
+echo "ip $*" >> "${MWAN3_IP_LOG}"
+exit 0
+MOCK
+	chmod +x "$MOCK_BIN/ip"
+	mwan3_sync_track_host_routes tb62 phy0-sta0
+	: >"$MWAN3_IP_LOG"
+	mwan3_delete_track_host_routes tb62
+	if grep -q 'route del table 2 2606:4700:4700::1001/128 via fe80::1 dev phy0-sta0' "$MWAN3_IP_LOG"; then
+		log_pass "delete removes stored via-spec track routes"
+	else
+		log_fail "delete removes stored via-spec track routes"
+		cat "$MWAN3_IP_LOG"
+	fi
+}
+
 test_sync_adds_host_routes() {
 	setup
 	mwan3_sync_track_host_routes tb62 tb62
@@ -221,6 +272,8 @@ test_id2mask_iface_marks
 test_disabled_globally
 test_delete_removes_routes
 test_sync_skips_ipv4
+test_sync_uses_gateway_for_uplink
+test_gateway_uplink_delete_stale
 
 echo ""
 echo "Results: $passed passed, $failed failed"
